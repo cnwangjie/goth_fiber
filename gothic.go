@@ -85,7 +85,11 @@ func SetState(ctx *fiber.Ctx) string {
 // This is used to prevent CSRF attacks, see
 // http://tools.ietf.org/html/rfc6749#section-10.12
 func GetState(ctx *fiber.Ctx) string {
-	return ctx.Query("state")
+	state := ctx.Query("state")
+	if state == "" && ctx.Method() == fiber.MethodPost {
+		return ctx.FormValue("state")
+	}
+	return state
 }
 
 /*
@@ -226,8 +230,22 @@ func validateState(ctx *fiber.Ctx, sess goth.Session) error {
 		return err
 	}
 
+	reqState, err := url.QueryUnescape(GetState(ctx))
+	if err != nil {
+		return err
+	}
+
 	originalState := authURL.Query().Get("state")
-	if originalState != "" && (originalState != ctx.Query("state")) {
+	// attempt to unescape the state token twice to handle cases where the token is double-escaped
+	if o, err := url.QueryUnescape(originalState); err == nil {
+		originalState = o
+	}
+
+	if o, err := url.QueryUnescape(originalState); err == nil {
+		originalState = o
+	}
+
+	if originalState != "" && (originalState != reqState) {
 		return errors.New("state token mismatch")
 	}
 	return nil

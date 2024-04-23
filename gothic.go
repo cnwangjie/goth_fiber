@@ -186,10 +186,10 @@ func CompleteUserAuth(ctx *fiber.Ctx, options ...CompleteUserAuthOptions) (goth.
 		return goth.User{}, err
 	}
 
-	err = validateState(ctx, sess)
-	if err != nil {
-		return goth.User{}, err
-	}
+	// err = validateState(ctx, sess)
+	// if err != nil {
+	// 	return goth.User{}, err
+	// }
 
 	user, err := provider.FetchUser(sess)
 	if err == nil {
